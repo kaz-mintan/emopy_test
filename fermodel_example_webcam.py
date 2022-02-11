@@ -16,15 +16,15 @@ def tmp_log(array,now):
     return log_array
 
 class ferClass:
-    def __init__(self,file):
+    def __init__(self):
         self.target_emotions = ['calm', 'anger', 'happiness']
         self.model = FERModel(self.target_emotions, verbose=True)
-        self.file = file
         self.mode = "no-print"
 
-    def ret_fer(self):
+    def ret_fer(self,frame):
 
-        frame_string = self.model.predict(self.file,self.mode)
+        frame_string = self.model.predict(frame,self.mode)
+
         data = np.array(frame_string)
         return data
 
@@ -39,7 +39,7 @@ def get_emotion_from_camera(face_oname,face_tmpname):
     ret = None
 
     file = 'image_data/image.jpg'
-    emo = ferClass(file)
+    emo = ferClass()
 
     face_stock = np.zeros((100,len(emo.target_emotions)+5))
 
@@ -47,10 +47,10 @@ def get_emotion_from_camera(face_oname,face_tmpname):
 
       while(True):
         ret, frame = video_capture.read()
-        cv2.imwrite(file, frame)
+        #cv2.imwrite(file, frame)
         if frame is not None:
             face_stock[:-1,:] = face_stock[1:]
-            data=emo.ret_fer()
+            data=emo.ret_fer(frame)
             print(data)
 
             now_time = datetime.now()
