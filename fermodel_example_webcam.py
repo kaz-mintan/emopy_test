@@ -15,8 +15,20 @@ def tmp_log(array,now):
             np.array([now.day,now.hour,now.minute,now.second,now.microsecond])
     return log_array
 
+class ferClass:
+    def __init__(self,file):
+        self.target_emotions = ['calm', 'anger', 'happiness']
+        self.model = FERModel(self.target_emotions, verbose=True)
+        self.file = file
+        self.mode = "no-print"
 
-def get_emotion_from_camera(face_oname):
+    def ret_fer(self):
+
+        frame_string = self.model.predict(self.file,self.mode)
+        data = np.array(frame_string)
+        return data
+
+def get_emotion_from_camera(face_oname,face_tmpname):
 
     # Specify the camera which you want to use. The default argument is '0'
     video_capture = cv2.VideoCapture(0)
@@ -24,12 +36,12 @@ def get_emotion_from_camera(face_oname):
     video_capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 360)
     video_capture.set(cv2.CAP_PROP_FPS, 15)
 
-    file = 'image_data/image.jpg'
     ret = None
-    target_emotions = ['calm', 'anger', 'happiness']
-    model = FERModel(target_emotions, verbose=True)
 
-    mode = "no-print"
+    file = 'image_data/image.jpg'
+    emo = ferClass(file)
+
+    face_stock = np.zeros((100,len(emo.target_emotions)+5))
 
     with open(face_oname,'a') as face_f:
 
@@ -37,14 +49,15 @@ def get_emotion_from_camera(face_oname):
         ret, frame = video_capture.read()
         cv2.imwrite(file, frame)
         if frame is not None:
-            # Can choose other target emotions from the emotion subset defined in
-                    # fermodel.py in src directory. The function
-            # defined as `def _check_emotion_set_is_supported(self):`
+            face_stock[:-1,:] = face_stock[1:]
+            data=emo.ret_fer()
+            print(data)
 
-            frame_string = model.predict(file,mode)
-            data = np.array(frame_string)
-            np.savetxt(face_f,tmp_log(data,datetime.now()),fmt="%f",delimiter=",")
-            print(target_emotions,np.array(frame_string))
+            now_time = datetime.now()
+            face_stock[-1,:] = tmp_log(data,now_time)
+            np.savetxt(face_tmpname,face_stock,fmt="%f",delimiter=",")
+            np.savetxt(face_f,tmp_log(data,now_time),fmt="%f",delimiter=",")
+
             cv2.imshow('frame',frame)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
@@ -54,4 +67,6 @@ def get_emotion_from_camera(face_oname):
 
 
 if __name__ == '__main__':
-    get_emotion_from_camera("test_face.csv")
+    oname = "test_face_log.csv"
+    tmpname = "test_face.csv"
+    get_emotion_from_camera(oname,tmpname)
